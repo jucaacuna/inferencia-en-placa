@@ -1,0 +1,4 @@
+.pio
+.vscode/
+# Secrets — never commit
+.env
