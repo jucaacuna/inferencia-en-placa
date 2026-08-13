@@ -1,12 +1,10 @@
 # inferencia-en-placa
 
-Proyecto basado en PlatformIO para un ESP32-S3 con cámara que ejecuta inferencia de IA y publica resultados vía MQTT.
+Proyecto basado en PlatformIO para una placa ESP32-S3 con cámara que ejecuta inferencia de IA y publica resultados vía protocolo MQTT.
 
 ## Descripción
 
-Este proyecto configura un dispositivo ESP32-S3 con cámara para ejecutar el modelo de detección generado en Edge Impulse y publicar el resultado vía MQTT.
-
-El objetivo central del despliegue es validar en hardware real el modelo entrenado en Edge Impulse, con acceso a la cámara, conexión WiFi y transmisión de inferencias hacia el sistema de monitoreo central.
+Este proyecto configura un dispositivo ESP32-S3 con cámara para ejecutar el modelo de detección generado en Edge Impulse. De manera complementaria, se configura una conexión WiFi y se publica el resultado de las inferencias vía MQTT hacia un broker.
 
 Incluye:
 
@@ -22,9 +20,11 @@ La lógica principal está en `src/main.cpp` y la configuración del tablero en 
 
 ## Motor de inferencia
 
-Este despliegue no usa el motor EON. La exportación de Edge Impulse incluida en este proyecto se integra con el runtime TFLite del SDK de Edge Impulse, como se indica en los metadatos generados del modelo (`EI_CLASSIFIER_INFERENCING_ENGINE` = `EI_CLASSIFIER_TFLITE`, `EI_CLASSIFIER_COMPILED` = `1`).
+Este proyecto usa la exportación de Edge Impulse descargada como Arduino library y compilada con el motor EON.
 
-Es decir, el modelo se ejecuta como una implementación compilada de TensorFlow Lite Micro dentro del SDK de Edge Impulse, no como un modelo EON específico.
+La carpeta `lib/Tarea_IoT_grupo_inferencing/` contiene la librería Arduino exportada por Edge Impulse, con su SDK (`edge-impulse-sdk`) y el modelo optimizado para ejecutarse en microcontroladores. El modelo se integra con el runtime del SDK de Edge Impulse, usando la ruta de inferencia EON/compiled que genera el compilador de Edge Impulse para embedded devices.
+
+En otras palabras: esta no es una exportación genérica de C++ para Linux ni una librería “manual”; es la librería Arduino oficial del modelo generado en Edge Impulse, preparada para ESP32-S3 y optimizada por EON Compiler.
 
 ## Estructura
 
@@ -81,12 +81,12 @@ El firmware:
 - se conecta a WiFi
 - inicializa la cámara
 - prepara el frame para el input del modelo
-- ejecuta la inferencia del modelo exportado desde Edge Impulse usando el runtime TFLite del SDK
+- ejecuta la inferencia del modelo exportado desde Edge Impulse como Arduino library con el runtime del SDK y el modelo EON
 - publica el resultado en `MQTT_TOPIC_INF`
 - publica salud del dispositivo en `MQTT_TOPIC_STATUS`
 - escucha comandos entrantes en `MQTT_TOPIC_CMD`
 
-Este flujo está diseñado para probar en placa el modelo generado en Edge Impulse y observar su comportamiento en tiempo real, sin depender de un motor EON.
+Este flujo está diseñado para probar en placa el modelo generado en Edge Impulse, descargado como librería Arduino y optimizado por EON Compiler para ejecutar inferencias en ESP32-S3.
 
 ## Diagnóstico
 

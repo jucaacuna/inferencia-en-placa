@@ -13,6 +13,21 @@
 #define EI_LIB_AVAILABLE 0
 #endif
 
+// Network/broker config — typically injected from .env via load_env.py.
+// Keep defaults so the project still compiles when .env is missing.
+#ifndef WIFI_SSID
+#define WIFI_SSID ""
+#endif
+#ifndef WIFI_PASS
+#define WIFI_PASS ""
+#endif
+#ifndef MQTT_BROKER
+#define MQTT_BROKER "broker.hivemq.com"
+#endif
+#ifndef MQTT_PORT
+#define MQTT_PORT 1883
+#endif
+
 // MQTT topics — defined via .env → load_env.py → build flags
 #ifndef MQTT_TOPIC_INF
 #define MQTT_TOPIC_INF "esp32s3/inference"
