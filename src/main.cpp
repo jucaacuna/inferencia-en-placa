@@ -254,15 +254,6 @@ static void wifi_connect() {
 
 // ── MQTT ────────────────────────────────────────────────────────────────────
 
-static void mqtt_on_cmd(char *topic, byte *payload, unsigned int len) {
-  String cmd;
-  cmd.reserve(len);
-  for (unsigned int i = 0; i < len; i++) {
-    cmd += static_cast<char>(payload[i]);
-  }
-  process_command_line(cmd);
-}
-
 static void mqtt_reconnect() {
   if (s_mqtt.connected() || WiFi.status() != WL_CONNECTED) {
     return;
@@ -277,7 +268,6 @@ static void mqtt_reconnect() {
   if (s_mqtt.connect(clientId.c_str(), nullptr, nullptr,
                      MQTT_TOPIC_STATUS, 0, true, "{\"online\":false}")) {
     APP_PRINTLN("MQTT: connected.");
-    s_mqtt.subscribe(MQTT_TOPIC_CMD);
     s_mqtt.publish(MQTT_TOPIC_STATUS, "{\"online\":true}", true);
   } else {
     APP_PRINTF("MQTT: failed, rc=%d\n", s_mqtt.state());
@@ -287,15 +277,30 @@ static void mqtt_reconnect() {
 // ── Inference publish ────────────────────────────────────────────────────────
 
 #if EI_LIB_AVAILABLE
-static void publish_inference(const ei_impulse_result_t &result) {
+static void publish_inference(const ei_impulse_result_t &result,
+                            uint32_t capture_start_ms,
+                            uint32_t capture_end_ms,
+                            uint32_t infer_start_ms,
+                            uint32_t infer_end_ms) {
   if (!s_mqtt.connected()) {
     return;
   }
 
+  const uint32_t mqtt_send_start_ms = millis();
   String p;
   p.reserve(1024);
   p  = "{\"device\":\"esp32s3\",\"ts\":";
-  p += millis();
+  p += mqtt_send_start_ms;
+  p += ",\"capture_start_ms\":";
+  p += capture_start_ms;
+  p += ",\"capture_end_ms\":";
+  p += capture_end_ms;
+  p += ",\"infer_start_ms\":";
+  p += infer_start_ms;
+  p += ",\"infer_end_ms\":";
+  p += infer_end_ms;
+  p += ",\"mqtt_send_start_ms\":";
+  p += mqtt_send_start_ms;
   p += ",\"model\":{\"w\":";
   p += kModelWidth;
   p += ",\"h\":";
@@ -368,6 +373,11 @@ static void publish_inference(const ei_impulse_result_t &result) {
     p += "}";
   }
 
+  const uint32_t mqtt_send_end_ms = millis();
+  p += ",\"mqtt_send_end_ms\":";
+  p += mqtt_send_end_ms;
+  p += ",\"e2e_ms\":";
+  p += static_cast<uint32_t>(mqtt_send_end_ms - capture_start_ms);
   p += ",\"timing\":{\"dsp\":";
   p += result.timing.dsp;
   p += ",\"inf\":";
@@ -492,7 +502,6 @@ void setup() {
 
   wifi_connect();
   s_mqtt.setServer(MQTT_BROKER, MQTT_PORT);
-  s_mqtt.setCallback(mqtt_on_cmd);
   mqtt_reconnect();
 }
 
@@ -518,12 +527,14 @@ void loop() {
     return;
   }
 
+  const uint32_t capture_start_ms = millis();
   camera_fb_t *fb = esp_camera_fb_get();
   if (!fb) {
     APP_PRINTLN("Frame capture failed.");
     delay(100);
     return;
   }
+  const uint32_t capture_end_ms = millis();
 
   if (fb->format != PIXFORMAT_RGB565) {
     APP_PRINTF("Unexpected frame format: %d\n", static_cast<int>(fb->format));
@@ -541,8 +552,10 @@ void loop() {
   signal.total_length = static_cast<size_t>(kModelWidth * kModelHeight);
   signal.get_data = &ei_camera_get_data;
 
+  const uint32_t infer_start_ms = millis();
   ei_impulse_result_t result = {};
   EI_IMPULSE_ERROR err = run_classifier(&signal, &result, false);
+  const uint32_t infer_end_ms = millis();
   if (err != EI_IMPULSE_OK) {
     APP_PRINTF("run_classifier error: %d\n", static_cast<int>(err));
     delay(500);
@@ -579,7 +592,7 @@ void loop() {
   }
 #endif
 
-  publish_inference(result);
+  publish_inference(result, capture_start_ms, capture_end_ms, infer_start_ms, infer_end_ms);
   APP_PRINTLN("---");
 #else
   APP_PRINTLN("Frame captured and resized. Waiting for Edge Impulse library...");
