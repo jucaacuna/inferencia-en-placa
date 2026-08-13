@@ -2,6 +2,11 @@
 
 Proyecto basado en PlatformIO para una placa ESP32-S3 con cámara que ejecuta inferencia de IA y publica resultados vía protocolo MQTT.
 
+El desarrollo fue en conjunto entre:
+- [Prof. Juan Carlos Acuña](https://github.com/jucaacuna)
+- [Prof. Martín Derly Bentancor](https://github.com/bentancormartin)
+- Prof. Gustavo L. Farías
+
 ## Descripción
 
 Este proyecto configura un dispositivo ESP32-S3 con cámara para ejecutar el modelo de detección generado en Edge Impulse. De manera complementaria, se configura una conexión WiFi y se publica el resultado de las inferencias vía MQTT hacia un broker.
@@ -16,15 +21,15 @@ Incluye:
 - envío de estado del dispositivo
 - recepción de comandos desde el panel central
 
-La lógica principal está en `src/main.cpp` y la configuración del tablero en `platformio.ini`.
+La lógica principal está en `src/main.cpp`, la configuración del tablero en `platformio.ini`.
 
 ## Motor de inferencia
 
 Este proyecto usa la exportación de Edge Impulse descargada como Arduino library y compilada con el motor EON.
 
-La carpeta `lib/Tarea_IoT_grupo_inferencing/` contiene la librería Arduino exportada por Edge Impulse, con su SDK (`edge-impulse-sdk`) y el modelo optimizado para ejecutarse en microcontroladores. El modelo se integra con el runtime del SDK de Edge Impulse, usando la ruta de inferencia EON/compiled que genera el compilador de Edge Impulse para embedded devices.
+La carpeta `lib/Tarea_IoT_grupo_inferencing/` contiene la librería Arduino exportada desde Edge Impulse, con su SDK (`edge-impulse-sdk`) y el modelo optimizado para ejecutarse en microcontroladores. El modelo se integra con el runtime del SDK de Edge Impulse, usando la ruta de inferencia EON/compiled que genera el compilador de Edge Impulse para embedded devices.
 
-En otras palabras: esta no es una exportación genérica de C++ para Linux ni una librería “manual”; es la librería Arduino oficial del modelo generado en Edge Impulse, preparada para ESP32-S3 y optimizada por EON Compiler.
+En otras palabras, esta no es una exportación genérica de C++ para Linux ni una librería “manual”; es la librería Arduino oficial del modelo generado en Edge Impulse, preparada para ESP32-S3 y optimizada por EON Compiler.
 
 ## Estructura
 
@@ -43,7 +48,7 @@ En otras palabras: esta no es una exportación genérica de C++ para Linux ni un
 - Broker MQTT accesible desde la red
 - Red WiFi con SSID y contraseña válidas
 
-## Configuración
+## Configuración (paso a paso)
 
 1. Copia el archivo de ejemplo:
 
@@ -65,7 +70,7 @@ En otras palabras: esta no es una exportación genérica de C++ para Linux ni un
 
 3. Ajusta los pines de la cámara si es necesario en `platformio.ini`.
 
-## Compilar y subir
+## Compilar y subir a la placa
 
 ```bash
 pio run
@@ -99,4 +104,4 @@ Si el proyecto no compila o no conecta, revisa:
 
 ## Nota
 
-Este firmware está diseñado para trabajar junto con un panel de visualización MQTT, como el proyecto `Panel-andon` de este workspace.
+Este firmware está diseñado para trabajar junto con un panel de visualización que consuma datos desde el broker MQTT, como el proyecto [`Panel-andon`](https://github.com/jucaacuna/Panel-andon).
