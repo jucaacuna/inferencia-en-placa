@@ -5,7 +5,7 @@ Proyecto basado en PlatformIO para una placa ESP32-S3 con cámara que ejecuta in
 El desarrollo fue en conjunto entre:
 - [Prof. Juan Carlos Acuña](https://github.com/jucaacuna)
 - [Prof. Martín Derly Bentancor](https://github.com/bentancormartin)
-- Prof. Gustavo L. Farías
+- [Prof. Gustavo L. Farías](https://github.com/gustavofarias-eng)
 
 ## Descripción
 
